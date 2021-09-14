@@ -1,6 +1,6 @@
 import { logger } from "@coder/logger"
 import * as http from "http"
-import { createApp, ensureAddress } from "../../../src/node/app"
+import { createApp, ensureAddress, handleServerError } from "../../../src/node/app"
 import { setDefaults } from "../../../src/node/cli"
 import { getAvailablePort } from "../../utils/helpers"
 
@@ -122,5 +122,40 @@ describe("ensureAddress", () => {
   })
 })
 
-// TODO@jsjoeio
-// write tests for handleServerError
+describe("handleServerError", () => {
+  let spy: jest.SpyInstance
+
+  beforeEach(() => {
+    spy = jest.spyOn(logger, "error")
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("should call reject if resolved is false", async () => {
+    const resolved = false
+    const reject = jest.fn((err: Error) => undefined)
+    const error = new Error("handleServerError Error")
+
+    handleServerError(resolved, error, reject)
+
+    expect(reject).toHaveBeenCalledTimes(1)
+    expect(reject).toHaveBeenCalledWith(error)
+  })
+
+  it("should log an error if resolved is true", async () => {
+    const resolved = true
+    const reject = jest.fn((err: Error) => undefined)
+    const error = new Error("handleServerError Error")
+
+    handleServerError(resolved, error, reject)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toThrowErrorMatchingSnapshot()
+  })
+})
