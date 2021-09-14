@@ -63,6 +63,36 @@ describe("createApp", () => {
     // Cleanup
     server.close()
   })
+
+  it("should reject errors", async () => {
+    const port = 2
+    const defaultArgs = await setDefaults({
+      port,
+      _: [],
+    })
+
+    // This looks funky, but that's because createApp
+    // returns an array like [app, wsApp, server]
+    // We only need server which is at index 2
+    // we do it this way so ESLint is happy that we're
+    // have no declared variables not being used
+    async function masterBall() {
+      const app = await createApp(defaultArgs)
+      const server = app[2]
+
+      const testError = new Error("Test error")
+      // Emitting error events on servers
+      // https://stackoverflow.com/a/33872506/3015595
+      server.emit("error", testError)
+      // expect(spy).toHaveBeenCalledTimes(1)
+      // expect(spy).toHaveBeenCalledWith(`http server error: ${testError.message} ${testError.stack}`)
+
+      // Cleanup
+      server.close()
+    }
+
+    expect(() => masterBall()).rejects.toThrow(`listen EACCES: permission denied 127.0.0.1:${port}`)
+  })
 })
 
 describe("ensureAddress", () => {
