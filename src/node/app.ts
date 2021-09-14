@@ -41,10 +41,10 @@ export const createApp = async (args: DefaultedArgs): Promise<[Express, Express,
       try {
         await fs.unlink(args.socket)
       } catch (error: any) {
-        if (isNodeJSErrnoException(error) && error.code !== "ENOENT") {
-          logger.error(error.message)
-        } else if (!isNodeJSErrnoException(error)) {
-          logger.error(error)
+        // TODO@jsjoeio break this out into a separate error handler
+        // That way we can handle all cases
+        if (!isNodeJSErrnoException(error) || error.code !== "ENOENT") {
+          logger.error(error.message ? error.message : error)
         }
       }
       server.listen(args.socket, resolve)

@@ -160,7 +160,6 @@ describe("handleServerError", () => {
   })
 })
 
-
 // TODO@jsjoeio - write
 // make a file owned by root
 // restrictive permissions - 600
@@ -171,3 +170,7 @@ describe("handleServerError", () => {
 // pass in / into
 // create a directory and pass that in as the socket
 // with one file and use the directory as the socket path
+
+// The other thing I can do is mock fs.unlink
+// and make it throw an error
+// Stopped 
