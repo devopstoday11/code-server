@@ -524,3 +524,10 @@ export function escapeHtml(unsafe: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;")
 }
+
+/**
+ * 
+ */
+export function isNodeJSErrnoException(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && (error as NodeJS.ErrnoException).code !== undefined
+}

@@ -6,6 +6,7 @@ import http from "http"
 import * as httpolyglot from "httpolyglot"
 import * as util from "../common/util"
 import { DefaultedArgs } from "./cli"
+import { isNodeJSErrnoException } from "./util"
 import { handleUpgrade } from "./wsRouter"
 
 /**
@@ -39,9 +40,11 @@ export const createApp = async (args: DefaultedArgs): Promise<[Express, Express,
     if (args.socket) {
       try {
         await fs.unlink(args.socket)
-      } catch (error) {
-        if (error.code !== "ENOENT") {
+      } catch (error: any) {
+        if (isNodeJSErrnoException(error) && error.code !== "ENOENT") {
           logger.error(error.message)
+        } else if (!isNodeJSErrnoException(error)) {
+          logger.error(error)
         }
       }
       server.listen(args.socket, resolve)

@@ -159,3 +159,15 @@ describe("handleServerError", () => {
     expect(spy).toThrowErrorMatchingSnapshot()
   })
 })
+
+
+// TODO@jsjoeio - write
+// make a file owned by root
+// restrictive permissions - 600
+// no one else can touch it besides root
+
+// make the socket on the file path and i'll get that..
+
+// pass in / into
+// create a directory and pass that in as the socket
+// with one file and use the directory as the socket path
