@@ -121,3 +121,6 @@ describe("ensureAddress", () => {
     expect(address).toBe(`http://localhost:8080`)
   })
 })
+
+// TODO@jsjoeio
+// write tests for handleServerError
