@@ -222,6 +222,7 @@
     "tar": "^6.1.9",
     "pac-resolver": "^5.0.0",
     "path-parse": "^1.0.7",
-    "yargs-parser": "^13.1.2"
+    "yargs-parser": "^13.1.2",
+    "set-value": "^4.0.1"
   }
 }
