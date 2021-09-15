@@ -1,9 +1,10 @@
 import { logger } from "@coder/logger"
 import { promises, rmdirSync } from "fs"
 import * as http from "http"
+import * as https from "https"
 import * as path from "path"
 import { createApp, ensureAddress, handleArgsSocketCatchError, handleServerError } from "../../../src/node/app"
-import { setDefaults } from "../../../src/node/cli"
+import { OptionalString, setDefaults } from "../../../src/node/cli"
 import { getAvailablePort, tmpdir } from "../../utils/helpers"
 
 describe("createApp", () => {
@@ -135,6 +136,27 @@ describe("createApp", () => {
     expect(spy).toHaveBeenCalledWith(`ENOENT: no such file or directory, unlink '${socketPath}'`)
     // Ensure directory was removed
     rmdirSync(socketPath, { recursive: true })
+    server.close()
+  })
+
+  it("should create an https server if args.cert exists", async () => {
+    // No idea why we have this weird optional string thing
+    const port = await getAvailablePort()
+    const cert = new OptionalString("./test/utils/test.crt")
+    const defaultArgs = await setDefaults({
+      port,
+      cert,
+      _: [],
+      ["cert-key"]: "./test/utils/test.key",
+    })
+    const app = await createApp(defaultArgs)
+    const server = app[2]
+
+    // This doesn't check much, but it's a good sanity check
+    // to ensure we actually get back values from createApp
+    expect(server).toBeInstanceOf(https.Server)
+
+    // Cleanup
     server.close()
   })
 })
