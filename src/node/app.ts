@@ -41,11 +41,7 @@ export const createApp = async (args: DefaultedArgs): Promise<[Express, Express,
       try {
         await fs.unlink(args.socket)
       } catch (error: any) {
-        // TODO@jsjoeio break this out into a separate error handler
-        // That way we can handle all cases
-        if (!isNodeJSErrnoException(error) || error.code !== "ENOENT") {
-          logger.error(error.message ? error.message : error)
-        }
+        handleArgsSocketCatchError(error)
       }
       server.listen(args.socket, resolve)
     } else {
@@ -95,5 +91,18 @@ export const handleServerError = (resolved: boolean, err: Error, reject: (err: E
   } else {
     // Promise resolved earlier so this is an unrelated error.
     util.logError(logger, "http server error", err)
+  }
+}
+
+/**
+ * Handles the error that occurs in the catch block
+ * after we try fs.unlink(args.socket).
+ *
+ * We extracted into a function so that we could
+ * test this logic more easily.
+ */
+export const handleArgsSocketCatchError = (error: any) => {
+  if (!isNodeJSErrnoException(error) || error.code !== "ENOENT") {
+    logger.error(error.message ? error.message : error)
   }
 }

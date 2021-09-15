@@ -1,6 +1,6 @@
 import { logger } from "@coder/logger"
 import * as http from "http"
-import { createApp, ensureAddress, handleServerError } from "../../../src/node/app"
+import { createApp, ensureAddress, handleArgsSocketCatchError, handleServerError } from "../../../src/node/app"
 import { setDefaults } from "../../../src/node/cli"
 import { getAvailablePort } from "../../utils/helpers"
 
@@ -167,10 +167,75 @@ describe("handleServerError", () => {
 
 // make the socket on the file path and i'll get that..
 
-// pass in / into
 // create a directory and pass that in as the socket
 // with one file and use the directory as the socket path
 
 // The other thing I can do is mock fs.unlink
 // and make it throw an error
-// Stopped 
+// Stopped
+
+describe("handleArgsSocketCatchError", () => {
+  let spy: jest.SpyInstance
+
+  beforeEach(() => {
+    spy = jest.spyOn(logger, "error")
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+  })
+
+  afterAll(() => {
+    jest.restoreAllMocks()
+  })
+
+  it("should log an error if its not an isNodeJSErrnoException", () => {
+    const error = new Error()
+
+    handleArgsSocketCatchError(error)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(error)
+  })
+
+  it("should log an error if its not an isNodeJSErrnoException (and the error has a message)", () => {
+    const errorMessage = "handleArgsSocketCatchError Error"
+    const error = new Error(errorMessage)
+
+    handleArgsSocketCatchError(error)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(errorMessage)
+  })
+
+  it("should not log an error if its a isNodeJSErrnoException", () => {
+    const error: NodeJS.ErrnoException = new Error()
+    error.code = "ENOENT"
+
+    handleArgsSocketCatchError(error)
+
+    expect(spy).toHaveBeenCalledTimes(0)
+  })
+
+  it("should log an error if the code is not ENOENT (and the error has a message)", () => {
+    const errorMessage = "no access"
+    const error: NodeJS.ErrnoException = new Error()
+    error.code = "EACCESS"
+    error.message = errorMessage
+
+    handleArgsSocketCatchError(error)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(errorMessage)
+  })
+
+  it("should log an error if the code is not ENOENT", () => {
+    const error: NodeJS.ErrnoException = new Error()
+    error.code = "EACCESS"
+
+    handleArgsSocketCatchError(error)
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(error)
+  })
+})
