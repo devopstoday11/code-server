@@ -1,14 +1,20 @@
 import { logger } from "@coder/logger"
+import { promises, rmdirSync } from "fs"
 import * as http from "http"
+import * as path from "path"
 import { createApp, ensureAddress, handleArgsSocketCatchError, handleServerError } from "../../../src/node/app"
 import { setDefaults } from "../../../src/node/cli"
-import { getAvailablePort } from "../../utils/helpers"
+import { getAvailablePort, tmpdir } from "../../utils/helpers"
 
 describe("createApp", () => {
   let spy: jest.SpyInstance
+  let unlinkSpy: jest.SpyInstance
 
   beforeEach(() => {
+    // https://github.com/aelbore/esbuild-jest/issues/26#issuecomment-893763840
+    // explain why we do it this way
     spy = jest.spyOn(logger, "error")
+    unlinkSpy = jest.spyOn(promises, "unlink")
   })
 
   afterEach(() => {
@@ -92,6 +98,44 @@ describe("createApp", () => {
     }
 
     expect(() => masterBall()).rejects.toThrow(`listen EACCES: permission denied 127.0.0.1:${port}`)
+  })
+
+  it("should unlink a socket before listening on the socket", async () => {
+    const tmpDir = await tmpdir("unlink-socket")
+    const tmpFile = path.join(tmpDir, "unlink-socket-file")
+    await promises.writeFile(tmpFile, "")
+    const socketPath = tmpFile
+    const defaultArgs = await setDefaults({
+      _: [],
+      socket: socketPath,
+    })
+
+    const app = await createApp(defaultArgs)
+    const server = app[2]
+
+    expect(unlinkSpy).toHaveBeenCalledTimes(1)
+    // Ensure directory was removed
+    rmdirSync(socketPath, { recursive: true })
+    server.close()
+  })
+  it("should catch errors thrown when unlinking a socket", async () => {
+    const tmpDir = await tmpdir("unlink-socket")
+    const tmpFile = path.join(tmpDir, "unlink-socket-file")
+    // await promises.writeFile(tmpFile, "")
+    const socketPath = tmpFile
+    const defaultArgs = await setDefaults({
+      _: [],
+      socket: socketPath,
+    })
+
+    const app = await createApp(defaultArgs)
+    const server = app[2]
+
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith(`ENOENT: no such file or directory, unlink '${socketPath}'`)
+    // Ensure directory was removed
+    rmdirSync(socketPath, { recursive: true })
+    server.close()
   })
 })
 
